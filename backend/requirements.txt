@@ -1,0 +1,44 @@
+# Smart Farm Backend Requirements
+# Soil Analysis and Government Scheme Backend
+
+# Core Flask dependencies
+Flask==2.3.3
+Flask-CORS==4.0.0
+Werkzeug==2.3.7
+
+# PDF processing
+PyPDF2==3.0.1
+pdfplumber==0.9.0
+
+# Weather API integration
+requests==2.31.0
+urllib3==2.0.7
+
+# Data processing
+pandas==2.1.4
+numpy==1.24.4
+
+# Database
+SQLAlchemy==2.0.23
+alembic==1.12.1
+
+# File handling
+python-magic==0.4.27
+Pillow==10.1.0
+
+# Environment management
+python-dotenv==1.0.0
+
+# Logging
+structlog==23.2.0
+
+# Testing
+pytest==7.4.3
+pytest-flask==1.3.0
+
+# Development
+black==23.11.0
+flake8==6.1.0
+
+# Production
+gunicorn==21.2.0

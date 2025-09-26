@@ -3343,6 +3343,299 @@ Your product is under review and will be live within 24 hours.`);
                 badge.textContent = `${currentCount + 1} New`;
             }
         }, 45000);
+
+        // ===== BACKEND INTEGRATION =====
+        const API_BASE = 'http://localhost:5001';
+        
+        // Backend API Functions
+        async function checkBackendHealth() {
+            try {
+                const response = await fetch(`${API_BASE}/api/health`);
+                const data = await response.json();
+                return data.status === 'healthy';
+            } catch (error) {
+                console.error('Backend not available:', error);
+                return false;
+            }
+        }
+
+        async function getCurrentWeatherFromAPI() {
+            try {
+                const lat = 28.6139; // Default to Delhi
+                const lon = 77.2090;
+                const response = await fetch(`${API_BASE}/api/weather/current?lat=${lat}&lon=${lon}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    return data.data.weather_data;
+                }
+                return null;
+            } catch (error) {
+                console.error('Weather API error:', error);
+                return null;
+            }
+        }
+
+        async function getCropRecommendationsFromAPI() {
+            try {
+                const payload = {
+                    soil_data: {
+                        ph: { value: 6.5, unit: 'pH' },
+                        nitrogen: { value: 80, unit: 'mg/kg' },
+                        phosphorus: { value: 25, unit: 'mg/kg' },
+                        potassium: { value: 150, unit: 'mg/kg' }
+                    },
+                    weather_data: {
+                        temperature: 25.5,
+                        humidity: 65.2,
+                        wind_speed: 3.2
+                    },
+                    user_preferences: {
+                        preferred_categories: ['cereal', 'vegetable'],
+                        preferred_seasons: ['winter', 'summer']
+                    }
+                };
+
+                const response = await fetch(`${API_BASE}/api/crop-recommendations`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                return data.success ? data.data.recommendations : null;
+            } catch (error) {
+                console.error('Crop recommendations API error:', error);
+                return null;
+            }
+        }
+
+        async function getGovernmentSchemesFromAPI() {
+            try {
+                const payload = {
+                    farmer_profile: {
+                        land_holding_hectares: 2.5,
+                        annual_income: 80000,
+                        age: 35,
+                        experience: 'intermediate',
+                        location: { latitude: 28.6139, longitude: 77.2090 }
+                    },
+                    soil_data: {
+                        ph: { value: 6.5, unit: 'pH' },
+                        nitrogen: { value: 80, unit: 'mg/kg' },
+                        phosphorus: { value: 25, unit: 'mg/kg' },
+                        potassium: { value: 150, unit: 'mg/kg' }
+                    },
+                    crop_preferences: ['wheat', 'rice', 'tomato']
+                };
+
+                const response = await fetch(`${API_BASE}/api/government-schemes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                return data.success ? data.data.recommendations : null;
+            } catch (error) {
+                console.error('Government schemes API error:', error);
+                return null;
+            }
+        }
+
+        async function generateFarmingPlanFromAPI(cropName) {
+            try {
+                const payload = {
+                    crop_name: cropName,
+                    soil_data: {
+                        ph: { value: 6.5, unit: 'pH' },
+                        nitrogen: { value: 80, unit: 'mg/kg' },
+                        phosphorus: { value: 25, unit: 'mg/kg' },
+                        potassium: { value: 150, unit: 'mg/kg' }
+                    },
+                    weather_data: {
+                        temperature: 25.5,
+                        humidity: 65.2,
+                        wind_speed: 3.2
+                    },
+                    farm_size: 2.0,
+                    farmer_experience: 'intermediate'
+                };
+
+                const response = await fetch(`${API_BASE}/api/farming-plan`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                return data.success ? data.data : null;
+            } catch (error) {
+                console.error('Farming plan API error:', error);
+                return null;
+            }
+        }
+
+        // Enhanced Soil Analysis Functions
+        async function loadRealTimeWeather() {
+            const weatherData = await getCurrentWeatherFromAPI();
+            if (weatherData) {
+                // Update weather display with real data
+                const weatherElements = document.querySelectorAll('.bg-blue-50 .text-center');
+                if (weatherElements.length >= 3) {
+                    weatherElements[0].querySelector('.font-bold').textContent = `${weatherData.temperature}°C`;
+                    weatherElements[1].querySelector('.font-bold').textContent = `${weatherData.humidity}%`;
+                    weatherElements[2].querySelector('.font-bold').textContent = `${weatherData.wind_speed} m/s`;
+                }
+            }
+        }
+
+        async function loadRealCropRecommendations() {
+            const recommendations = await getCropRecommendationsFromAPI();
+            if (recommendations && recommendations.length > 0) {
+                // Update crop recommendations with real data
+                const cropSelect = document.getElementById('cropSelect');
+                if (cropSelect) {
+                    // Add real recommendations to the dropdown
+                    recommendations.slice(0, 5).forEach((rec, index) => {
+                        const option = document.createElement('option');
+                        option.value = rec.crop_name.toLowerCase();
+                        option.textContent = `${rec.crop_name} (Score: ${rec.score})`;
+                        option.dataset.score = rec.score;
+                        option.dataset.suitability = rec.suitability;
+                        cropSelect.appendChild(option);
+                    });
+                }
+            }
+        }
+
+        async function loadGovernmentSchemes() {
+            const schemes = await getGovernmentSchemesFromAPI();
+            if (schemes && schemes.length > 0) {
+                // Display government schemes in the UI
+                const schemesContainer = document.querySelector('#government-schemes .grid');
+                if (schemesContainer) {
+                    schemes.slice(0, 3).forEach(scheme => {
+                        const schemeCard = document.createElement('div');
+                        schemeCard.className = 'bg-white rounded-lg p-4 border border-gray-200';
+                        schemeCard.innerHTML = `
+                            <h4 class="font-semibold text-gray-800 mb-2">${scheme.scheme_name}</h4>
+                            <p class="text-sm text-gray-600 mb-3">${scheme.description}</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-green-600 font-semibold">₹${scheme.benefit_amount.toLocaleString()}</span>
+                                <span class="bg-${scheme.priority_level === 'high' ? 'red' : scheme.priority_level === 'medium' ? 'yellow' : 'green'}-100 text-${scheme.priority_level === 'high' ? 'red' : scheme.priority_level === 'medium' ? 'yellow' : 'green'}-800 px-2 py-1 rounded text-xs">${scheme.priority_level}</span>
+                            </div>
+                        `;
+                        schemesContainer.appendChild(schemeCard);
+                    });
+                }
+            }
+        }
+
+        // Enhanced crop selection with backend integration
+        document.getElementById('cropSelect')?.addEventListener('change', async function() {
+            const selectedCrop = this.value;
+            if (selectedCrop) {
+                // Show loading state
+                const recommendationDiv = document.getElementById('cropRecommendation');
+                const modificationsDiv = document.getElementById('modifications');
+                
+                if (recommendationDiv) {
+                    recommendationDiv.classList.remove('hidden');
+                    modificationsDiv.innerHTML = '<div class="text-center py-4"><div class="spinner"></div><p>Generating recommendations...</p></div>';
+                }
+
+                // Get real farming plan from backend
+                const farmingPlan = await generateFarmingPlanFromAPI(selectedCrop);
+                
+                if (farmingPlan) {
+                    // Display real farming plan data
+                    modificationsDiv.innerHTML = `
+                        <div class="space-y-3">
+                            <div class="bg-green-50 border-l-4 border-green-400 p-3">
+                                <h5 class="font-semibold text-green-800">Farming Plan Generated!</h5>
+                                <p class="text-sm text-green-700">Duration: ${farmingPlan.farming_plan.duration_days} days</p>
+                                <p class="text-sm text-green-700">Total Cost: ₹${farmingPlan.farming_plan.total_cost_estimate.toLocaleString()}</p>
+                                <p class="text-sm text-green-700">Expected Yield: ${farmingPlan.farming_plan.expected_yield}</p>
+                            </div>
+                            <div class="bg-blue-50 border-l-4 border-blue-400 p-3">
+                                <h5 class="font-semibold text-blue-800">Key Phases:</h5>
+                                <ul class="text-sm text-blue-700 space-y-1">
+                                    ${Object.entries(farmingPlan.farming_plan.phases).slice(0, 3).map(([phase, data]) => 
+                                        `<li>• ${phase.replace('_', ' ')}: ${data.duration_days} days</li>`
+                                    ).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Fallback to static data
+                    const cropData = {
+                        wheat: {
+                            modifications: [
+                                { type: 'nitrogen', text: 'Apply nitrogen fertilizer (120kg/acre)', color: 'red' },
+                                { type: 'phosphorus', text: 'Add phosphorus for root development (60kg/acre)', color: 'orange' },
+                                { type: 'potassium', text: 'Maintain potassium levels (80kg/acre)', color: 'green' }
+                            ]
+                        },
+                        rice: {
+                            modifications: [
+                                { type: 'water', text: 'Ensure proper water management', color: 'blue' },
+                                { type: 'nitrogen', text: 'Split nitrogen application (150kg/acre)', color: 'red' },
+                                { type: 'zinc', text: 'Apply zinc sulfate (25kg/acre)', color: 'purple' }
+                            ]
+                        }
+                    };
+
+                    const modifications = cropData[selectedCrop]?.modifications || [];
+                    modificationsDiv.innerHTML = modifications.map(mod => `
+                        <div class="flex items-center space-x-3 p-2 bg-${mod.color}-50 rounded border-l-4 border-${mod.color}-400">
+                            <span class="w-3 h-3 bg-${mod.color}-500 rounded-full"></span>
+                            <span class="text-sm text-${mod.color}-800">${mod.text}</span>
+                        </div>
+                    `).join('');
+                }
+            }
+        });
+
+        // Initialize backend integration when page loads
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Check if backend is available
+            const isBackendAvailable = await checkBackendHealth();
+            
+            if (isBackendAvailable) {
+                console.log('✅ Backend API is available');
+                
+                // Load real-time data
+                await loadRealTimeWeather();
+                await loadRealCropRecommendations();
+                await loadGovernmentSchemes();
+                
+                // Show backend status
+                const statusIndicator = document.createElement('div');
+                statusIndicator.className = 'fixed top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm z-50';
+                statusIndicator.innerHTML = '🌐 API Connected';
+                document.body.appendChild(statusIndicator);
+                
+                // Remove status after 3 seconds
+                setTimeout(() => {
+                    statusIndicator.remove();
+                }, 3000);
+            } else {
+                console.log('⚠️ Backend API not available, using static data');
+                
+                // Show offline status
+                const statusIndicator = document.createElement('div');
+                statusIndicator.className = 'fixed top-4 right-4 bg-yellow-500 text-white px-3 py-1 rounded-full text-sm z-50';
+                statusIndicator.innerHTML = '📡 Offline Mode';
+                document.body.appendChild(statusIndicator);
+                
+                // Remove status after 3 seconds
+                setTimeout(() => {
+                    statusIndicator.remove();
+                }, 3000);
+            }
+        });
     </script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9855e284025f58c9',t:'MTc1ODkyMjQ2MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
