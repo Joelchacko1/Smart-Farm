@@ -1,0 +1,31 @@
+# Database requirements for Smart Farm system
+
+# Core database libraries
+SQLAlchemy==2.0.23
+alembic==1.12.1
+
+# Database drivers
+psycopg2-binary==2.9.9          # PostgreSQL driver
+PyMySQL==1.1.0                   # MySQL driver
+sqlite3                          # SQLite (built-in with Python)
+
+# Database utilities
+pandas==2.1.4                    # Data manipulation
+numpy==1.24.4                    # Numerical operations
+
+# Connection pooling and optimization
+sqlalchemy-utils==0.41.1         # Database utilities
+greenlet==3.0.2                  # Async support
+
+# Development and testing
+pytest==7.4.3                    # Testing framework
+pytest-asyncio==0.21.1           # Async testing
+factory-boy==3.3.0               # Test data generation
+
+# Monitoring and logging
+sqlalchemy-json==0.1.0           # JSON field support
+python-dotenv==1.0.0              # Environment variable management
+
+# Optional: For advanced features
+redis==5.0.1                     # Caching (optional)
+celery==5.3.4                    # Background tasks (optional)
